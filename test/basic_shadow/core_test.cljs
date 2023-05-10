@@ -4,7 +4,7 @@
    [cljs.core.async.interop :refer [<p!]]
    [kitchen-async.promise :as p]
    [lambdaisland.fetch :as fetch]
-   [clojure.test :refer [deftest testing is async]]))
+   [cljs.test :refer-macros [deftest is testing async]]))
 
 (deftest passing-tests
   (is (= 1 (inc 0)))
@@ -30,14 +30,20 @@
   (testing "Exceptions are reported as :error results"
     (throw (ex-info "Oh no!" {:pos :outside}))))
 
-(defn return-promise []
-  (try
-    (throw (ex-info "Woring!" {:pos :promise}))))
+(deftest some-async-test-no-promise-error
+  (testing "Some async test should fail"
+    (async done
+           (go
+             (<p! (fetch/get "http://localhost:8000")) ; No error occurs here
+             (is (= false true)); executed
+             (prn "here")
+             (done)))))
 
-(deftest some-async-test
+(deftest some-async-test-with-promise-error
   (testing "Some async test should fail"
     (async done
            (go
              (<p! (fetch/get "http://localhost:8001")) ; error occurs here
              (is (= false true)) ; never executed
+             (prn "there")
              (done)))))
